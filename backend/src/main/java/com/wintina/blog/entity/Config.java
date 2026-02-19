@@ -12,27 +12,27 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "role", indexes = {
+@Table(name = "config", indexes = {
         @Index(name = "idx_is_deleted", columnList = "is_deleted")
 })
 @SQLRestriction("is_deleted = 0")
-public class Role {
+public class Config {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", nullable = false, columnDefinition = "BIGINT COMMENT '角色ID'")
+    @Column(name = "id", nullable = false, columnDefinition = "BIGINT COMMENT '配置ID'")
     private Long id;
 
-    @Column(name = "role_name", nullable = false, unique = true, length = 50, columnDefinition = "VARCHAR(50) COMMENT '角色名称'")
-    private String roleName;
+    @Column(name = "config_key", nullable = false, unique = true, length = 100, columnDefinition = "VARCHAR(100) COMMENT '配置键'")
+    private String configKey;
 
-    @Column(name = "role_label", nullable = false, unique = true, length = 50, columnDefinition = "VARCHAR(50) COMMENT '角色标识'")
-    private String roleLabel;
+    @Column(name = "config_value", columnDefinition = "TEXT COMMENT '配置值'")
+    private String configValue;
 
-    @Column(name = "description", length = 255, columnDefinition = "VARCHAR(255) COMMENT '角色描述'")
+    @Column(name = "description", length = 500, columnDefinition = "VARCHAR(500) COMMENT '配置描述'")
     private String description;
 
-    @Column(name = "status", columnDefinition = "TINYINT DEFAULT 1 COMMENT '状态(0:禁用 1:正常)'")
-    private Integer status = 1;
+    @Column(name = "type", length = 20, columnDefinition = "VARCHAR(20) DEFAULT 'STRING' COMMENT '类型: STRING, NUMBER, BOOLEAN, JSON'")
+    private String type = "STRING";
 
     @Column(name = "create_time", updatable = false, columnDefinition = "DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间'")
     private LocalDateTime createTime;

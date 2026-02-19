@@ -76,5 +76,13 @@ service.interceptors.response.use(
   }
 )
 
+
+// 🔥 新增核心：封装泛型请求函数，适配authApi的泛型调用，约束返回值类型
+// 泛型T：指定接口返回的「真实业务数据类型」（如LoginVO、User）
+// 返回Promise<T>：让TS能正确推导接口返回值类型，解决之前的TS2339错误
+const request = <T = any>(config: AxiosRequestConfig): Promise<T> => {
+  return service(config)
+}
+
 // 将封装好的 Axios 实例 service 导出
-export default service
+export default request

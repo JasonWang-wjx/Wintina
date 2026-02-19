@@ -1,18 +1,20 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
+import Home from '@/views/blog/Home.vue'
+import Login from '@/views/auth/Login.vue'
 
 const routes: RouteRecordRaw[] = [
   // 首页
   {
     path: '/',
     name: 'Home',
-    component: () => import('@/views/blog/Home.vue'),
+    component: Home,
   },
   // 登录页
   {
     path: '/login',
     name: 'Login',
-    component: () => import('@/views/auth/Login.vue'),
+    component: Login,
   },
 ]
 

@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { authApi } from '@/api/auth'  // 封装的用户认证相关接口（登录、获取用户信息），用于与后端交互获取用户数据
-import type { LoginDTO, User } from '@/types/user'  // 分别约束「登录表单数据格式」和「用户信息数据格式」，保证类型安全，避免非法数据赋值
+import type { LoginDTO, LoginVO, User } from '@/types/user'   // 分别约束「登录表单数据格式」和「用户信息数据格式」，保证类型安全，避免非法数据赋值
 
 export const useUserStore = defineStore('user', () => {
   const token = ref(localStorage.getItem('token') || '')

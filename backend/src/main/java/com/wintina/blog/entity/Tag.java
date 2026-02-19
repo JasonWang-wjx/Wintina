@@ -12,27 +12,28 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "role", indexes = {
+@Table(name = "tag", indexes = {
+        @Index(name = "idx_name", columnList = "name"),
         @Index(name = "idx_is_deleted", columnList = "is_deleted")
 })
 @SQLRestriction("is_deleted = 0")
-public class Role {
+public class Tag {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", nullable = false, columnDefinition = "BIGINT COMMENT '角色ID'")
+    @Column(name = "id", nullable = false, columnDefinition = "BIGINT COMMENT '标签ID'")
     private Long id;
 
-    @Column(name = "role_name", nullable = false, unique = true, length = 50, columnDefinition = "VARCHAR(50) COMMENT '角色名称'")
-    private String roleName;
+    @Column(name = "name", nullable = false, unique = true, length = 50, columnDefinition = "VARCHAR(50) COMMENT '标签名称'")
+    private String name;
 
-    @Column(name = "role_label", nullable = false, unique = true, length = 50, columnDefinition = "VARCHAR(50) COMMENT '角色标识'")
-    private String roleLabel;
+    @Column(name = "slug", nullable = false, unique = true, length = 50, columnDefinition = "VARCHAR(50) COMMENT '标签别名'")
+    private String slug;
 
-    @Column(name = "description", length = 255, columnDefinition = "VARCHAR(255) COMMENT '角色描述'")
-    private String description;
+    @Column(name = "color", length = 20, columnDefinition = "VARCHAR(20) COMMENT '标签颜色'")
+    private String color;
 
-    @Column(name = "status", columnDefinition = "TINYINT DEFAULT 1 COMMENT '状态(0:禁用 1:正常)'")
-    private Integer status = 1;
+    @Column(name = "post_count", columnDefinition = "INT DEFAULT 0 COMMENT '文章数量'")
+    private Integer postCount = 0;
 
     @Column(name = "create_time", updatable = false, columnDefinition = "DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间'")
     private LocalDateTime createTime;

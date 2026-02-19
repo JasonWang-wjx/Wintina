@@ -7,29 +7,46 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "role", indexes = {
+@Table(name = "category", indexes = {
+        @Index(name = "idx_parent_id", columnList = "parent_id"),
         @Index(name = "idx_is_deleted", columnList = "is_deleted")
 })
 @SQLRestriction("is_deleted = 0")
-public class Role {
+public class Category {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", nullable = false, columnDefinition = "BIGINT COMMENT '角色ID'")
+    @Column(name = "id", nullable = false, columnDefinition = "BIGINT COMMENT '分类ID'")
     private Long id;
 
-    @Column(name = "role_name", nullable = false, unique = true, length = 50, columnDefinition = "VARCHAR(50) COMMENT '角色名称'")
-    private String roleName;
+    @Column(name = "name", nullable = false, unique = true, length = 50, columnDefinition = "VARCHAR(50) COMMENT '分类名称'")
+    private String name;
 
-    @Column(name = "role_label", nullable = false, unique = true, length = 50, columnDefinition = "VARCHAR(50) COMMENT '角色标识'")
-    private String roleLabel;
+    @Column(name = "slug", nullable = false, unique = true, length = 50, columnDefinition = "VARCHAR(50) COMMENT '分类别名'")
+    private String slug;
 
-    @Column(name = "description", length = 255, columnDefinition = "VARCHAR(255) COMMENT '角色描述'")
+    @Column(name = "description", length = 255, columnDefinition = "VARCHAR(255) COMMENT '分类描述'")
     private String description;
+
+    @Column(name = "parent_id", columnDefinition = "BIGINT DEFAULT 0 COMMENT '父分类ID'")
+    private Long parentId = 0L;
+
+    // 自关联：父分类（多对一）
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id", insertable = false, updatable = false)
+    private Category parentCategory;
+
+    // 自关联：子分类（一对多）
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "parentCategory")
+    private List<Category> childCategories;
+
+    @Column(name = "sort_order", columnDefinition = "INT DEFAULT 0 COMMENT '排序'")
+    private Integer sortOrder = 0;
 
     @Column(name = "status", columnDefinition = "TINYINT DEFAULT 1 COMMENT '状态(0:禁用 1:正常)'")
     private Integer status = 1;

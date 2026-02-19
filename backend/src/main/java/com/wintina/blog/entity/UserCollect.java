@@ -12,27 +12,35 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "role", indexes = {
+@Table(name = "user_collect", indexes = {
+        @Index(name = "idx_user_id", columnList = "user_id"),
+        @Index(name = "idx_post_id", columnList = "post_id"),
         @Index(name = "idx_is_deleted", columnList = "is_deleted")
+}, uniqueConstraints = {
+        @UniqueConstraint(name = "uk_user_collect", columnNames = {"user_id", "post_id"})
 })
 @SQLRestriction("is_deleted = 0")
-public class Role {
+public class UserCollect {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", nullable = false, columnDefinition = "BIGINT COMMENT '角色ID'")
+    @Column(name = "id", nullable = false, columnDefinition = "BIGINT COMMENT 'ID'")
     private Long id;
 
-    @Column(name = "role_name", nullable = false, unique = true, length = 50, columnDefinition = "VARCHAR(50) COMMENT '角色名称'")
-    private String roleName;
+    @Column(name = "user_id", nullable = false, columnDefinition = "BIGINT COMMENT '用户ID'")
+    private Long userId;
 
-    @Column(name = "role_label", nullable = false, unique = true, length = 50, columnDefinition = "VARCHAR(50) COMMENT '角色标识'")
-    private String roleLabel;
+    // 关联用户表
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", insertable = false, updatable = false)
+    private User user;
 
-    @Column(name = "description", length = 255, columnDefinition = "VARCHAR(255) COMMENT '角色描述'")
-    private String description;
+    @Column(name = "post_id", nullable = false, columnDefinition = "BIGINT COMMENT '文章ID'")
+    private Long postId;
 
-    @Column(name = "status", columnDefinition = "TINYINT DEFAULT 1 COMMENT '状态(0:禁用 1:正常)'")
-    private Integer status = 1;
+    // 关联博文表
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "post_id", insertable = false, updatable = false)
+    private Post post;
 
     @Column(name = "create_time", updatable = false, columnDefinition = "DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间'")
     private LocalDateTime createTime;
