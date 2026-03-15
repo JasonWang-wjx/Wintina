@@ -1,60 +1,45 @@
 package com.wintina.blog.entity;
 
-import jakarta.persistence.*;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableLogic;
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity
-@Table(name = "role", indexes = {
-        @Index(name = "idx_is_deleted", columnList = "is_deleted")
-})
-@SQLRestriction("is_deleted = 0")
+@TableName("role")
 public class Role {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", nullable = false, columnDefinition = "BIGINT COMMENT '角色ID'")
+    @TableId(type = IdType.AUTO, value = "id")
     private Long id;
 
-    @Column(name = "role_name", nullable = false, unique = true, length = 50, columnDefinition = "VARCHAR(50) COMMENT '角色名称'")
+    @TableField(value = "role_name")
     private String roleName;
 
-    @Column(name = "role_label", nullable = false, unique = true, length = 50, columnDefinition = "VARCHAR(50) COMMENT '角色标识'")
+    @TableField(value = "role_label")
     private String roleLabel;
 
-    @Column(name = "description", length = 255, columnDefinition = "VARCHAR(255) COMMENT '角色描述'")
+    @TableField(value = "description")
     private String description;
 
-    @Column(name = "status", columnDefinition = "TINYINT DEFAULT 1 COMMENT '状态(0:禁用 1:正常)'")
+    @TableField(value = "status")
     private Integer status = 1;
 
-    @Column(name = "create_time", updatable = false, columnDefinition = "DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间'")
+    @TableField(value = "create_time")
     private LocalDateTime createTime;
 
-    @Column(name = "update_time", columnDefinition = "DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间'")
+    @TableField(value = "update_time")
     private LocalDateTime updateTime;
 
-    @Column(name = "is_deleted", columnDefinition = "TINYINT DEFAULT 0 COMMENT '逻辑删除(0:未删除 1:已删除)'")
+    @TableLogic
+    @TableField(value = "is_deleted")
     private Integer isDeleted = 0;
 
-    @PrePersist
-    protected void onCreate() {
-        if (createTime == null) {
-            createTime = LocalDateTime.now();
-        }
-        if (updateTime == null) {
-            updateTime = LocalDateTime.now();
-        }
-    }
 
-    @PreUpdate
-    protected void onUpdate() {
-        updateTime = LocalDateTime.now();
-    }
 }

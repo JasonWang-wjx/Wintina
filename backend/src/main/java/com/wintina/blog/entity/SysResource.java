@@ -1,92 +1,73 @@
 package com.wintina.blog.entity;
 
-import jakarta.persistence.*;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableLogic;
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.SQLRestriction;
 
 import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity
-@Table(name = "resource", indexes = {
-        @Index(name = "idx_user_id", columnList = "user_id"),
-        @Index(name = "idx_type", columnList = "type"),
-        @Index(name = "idx_status", columnList = "status"),
-        @Index(name = "idx_is_deleted", columnList = "is_deleted")
-})
-@SQLRestriction("is_deleted = 0")
+@TableName("resource")
 public class SysResource {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", nullable = false, columnDefinition = "BIGINT COMMENT '资源ID'")
+    @TableId(type = IdType.AUTO, value = "id")
     private Long id;
 
-    @Column(name = "user_id", nullable = false, columnDefinition = "BIGINT COMMENT '发布用户ID'")
+    @TableField(value = "user_id")
     private Long userId;
 
     // 关联用户表
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", insertable = false, updatable = false)
+    @TableField(exist = false)
     private User user;
 
-    @Column(name = "title", nullable = false, length = 200, columnDefinition = "VARCHAR(200) COMMENT '资源标题'")
+    @TableField(value = "title")
     private String title;
 
-    @Column(name = "description", columnDefinition = "TEXT COMMENT '资源描述'")
+    @TableField(value = "description")
     private String description;
 
-    @Column(name = "url", nullable = false, length = 500, columnDefinition = "VARCHAR(500) COMMENT '资源链接'")
+    @TableField(value = "url")
     private String url;
 
-    @Column(name = "file_url", length = 500, columnDefinition = "VARCHAR(500) COMMENT '文件下载地址'")
+    @TableField(value = "file_url")
     private String fileUrl;
 
-    @Column(name = "file_size", columnDefinition = "BIGINT COMMENT '文件大小'")
+    @TableField(value = "file_size")
     private Long fileSize;
 
-    @Column(name = "file_type", length = 50, columnDefinition = "VARCHAR(50) COMMENT '文件类型'")
+    @TableField(value = "file_type")
     private String fileType;
 
-    @Column(name = "icon", length = 255, columnDefinition = "VARCHAR(255) COMMENT '图标'")
+    @TableField(value = "icon")
     private String icon;
 
-    @Column(name = "type", nullable = false, length = 20, columnDefinition = "VARCHAR(20) NOT NULL COMMENT '类型: TOOL-工具, RESOURCE-资源'")
+    @TableField(value = "type")
     private String type;
 
-    @Column(name = "download_count", columnDefinition = "INT DEFAULT 0 COMMENT '下载次数'")
+    @TableField(value = "download_count")
     private Integer downloadCount = 0;
 
-    @Column(name = "view_count", columnDefinition = "INT DEFAULT 0 COMMENT '查看次数'")
+    @TableField(value = "view_count")
     private Integer viewCount = 0;
 
-    @Column(name = "status", columnDefinition = "TINYINT DEFAULT 1 COMMENT '状态: 0-下架, 1-上架'")
+    @TableField(value = "status")
     private Integer status = 1;
 
-    @Column(name = "create_time", updatable = false, columnDefinition = "DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间'")
+    @TableField(value = "create_time")
     private LocalDateTime createTime;
 
-    @Column(name = "update_time", columnDefinition = "DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间'")
+    @TableField(value = "update_time")
     private LocalDateTime updateTime;
 
-    @Column(name = "is_deleted", columnDefinition = "TINYINT DEFAULT 0 COMMENT '逻辑删除(0:未删除 1:已删除)'")
+    @TableLogic
+    @TableField(value = "is_deleted")
     private Integer isDeleted = 0;
 
-    @PrePersist
-    protected void onCreate() {
-        if (createTime == null) {
-            createTime = LocalDateTime.now();
-        }
-        if (updateTime == null) {
-            updateTime = LocalDateTime.now();
-        }
-    }
 
-    @PreUpdate
-    protected void onUpdate() {
-        updateTime = LocalDateTime.now();
-    }
 }
