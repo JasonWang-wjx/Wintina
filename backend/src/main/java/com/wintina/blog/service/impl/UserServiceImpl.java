@@ -1,7 +1,9 @@
 package com.wintina.blog.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.wintina.blog.common.exception.AppException;
+import com.wintina.blog.dto.auth.ChangePasswordDTO;
 import com.wintina.blog.dto.auth.LoginDTO;
 import com.wintina.blog.dto.auth.RegisterDTO;
 import com.wintina.blog.entity.User;
@@ -67,5 +69,29 @@ public class UserServiceImpl implements UserService {
         vo.setEmail(user.getEmail());
         vo.setToken(token);
         return vo;
+    }
+
+    /** 用户修改密码 */
+    @Override
+    public void changePassword(Long userId, ChangePasswordDTO dto) {
+        User user = userMapper.selectById(userId);
+        if (user == null) {
+            throw new AppException(404, "用户不存在");
+        }
+
+        if (!passwordEncoder.matches(dto.getOldPassword(), user.getPassword())) {
+            throw new AppException(400, "旧密码错误");
+        }
+
+        if (passwordEncoder.matches(dto.getNewPassword(), user.getPassword())) {
+            throw new AppException(400, "新密码不能与旧密码相同");
+        }
+
+        LambdaUpdateWrapper<User> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(User::getUserId, userId)
+                .set(User::getPassword, passwordEncoder.encode(dto.getNewPassword()))
+                .set(User::getUpdateTime, LocalDateTime.now());
+
+        userMapper.update(null, updateWrapper);
     }
 }

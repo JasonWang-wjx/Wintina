@@ -4,9 +4,11 @@ import com.wintina.blog.common.Result;
 import com.wintina.blog.dto.auth.*;
 import com.wintina.blog.dto.auth.LoginDTO;
 import com.wintina.blog.dto.auth.RegisterDTO;
+import com.wintina.blog.security.CustomUserDetails;
 import com.wintina.blog.service.auth.UserService;
 import com.wintina.blog.vo.auth.UserInfoVO;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,5 +31,14 @@ public class AuthController {
     public Result<UserInfoVO> login(@RequestBody @Validated LoginDTO dto) {
         UserInfoVO vo = userService.login(dto);
         return Result.success(200, "登录成功", vo);
+    }
+
+    /** 修改密码接口：PUT /api/auth/password */
+    @PutMapping("/password")
+    public Result<?> changePassword(
+            @RequestBody @Validated ChangePasswordDTO dto,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        userService.changePassword(userDetails.getUserId(), dto);
+        return Result.success(200, "密码修改成功", null);
     }
 }
