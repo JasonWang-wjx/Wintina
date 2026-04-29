@@ -49,10 +49,7 @@ service.interceptors.response.use(
     if (error.response?.status === 401) {
       ElMessage.error('请先登录')
 
-      // 清除本地 token
-      localStorage.removeItem('token')
-
-      // 跳转到登录页
+      useUserStore().logout()
       window.location.href = '/login'
 
       return Promise.reject(error)

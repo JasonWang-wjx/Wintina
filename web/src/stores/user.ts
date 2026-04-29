@@ -1,44 +1,54 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
-import { authApi } from '@/api/auth'  // 封装的用户认证相关接口（登录、获取用户信息），用于与后端交互获取用户数据
-import type { LoginDTO, LoginVO, User } from '@/types/user'   // 分别约束「登录表单数据格式」和「用户信息数据格式」，保证类型安全，避免非法数据赋值
+import { computed, ref } from 'vue'
+import { authApi } from '@/api/auth'
+import type { LoginDTO, User } from '@/types/user'
+
+const USER_STORAGE_KEY = 'userInfo'
 
 export const useUserStore = defineStore('user', () => {
   const token = ref(localStorage.getItem('token') || '')
-  const userInfo = ref<User | null>(null)
+  const storedUserInfo = localStorage.getItem(USER_STORAGE_KEY)
+  const userInfo = ref<User | null>(storedUserInfo ? JSON.parse(storedUserInfo) : null)
 
   const isLogin = computed(() => !!token.value)
-  const isAdmin = computed(() => userInfo.value?.role === 'ADMIN')
+  const displayName = computed(() => userInfo.value?.nickname || userInfo.value?.username || '')
+  const isAdmin = computed(
+    () => userInfo.value?.role === 'ADMIN' || userInfo.value?.roleId === 1,
+  )
 
-  // 登录
+  const setUserInfo = (data: User) => {
+    userInfo.value = data
+    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(data))
+  }
+
   const login = async (loginForm: LoginDTO) => {
     const data = await authApi.login(loginForm)
     token.value = data.token
-    userInfo.value = data.user
     localStorage.setItem('token', data.token)
+    setUserInfo({
+      userId: data.userId,
+      username: data.username,
+      nickname: data.nickname,
+      avatar: data.avatar,
+      email: data.email,
+      role: 'USER',
+    })
   }
 
-  // 登出
   const logout = () => {
     token.value = ''
     userInfo.value = null
     localStorage.removeItem('token')
+    localStorage.removeItem(USER_STORAGE_KEY)
   }
 
-  // 获取用户信息
-  const getUserInfo = async () => {
-    const data = await authApi.getUserInfo()
-    userInfo.value = data
-  }
-
-  // 暴露对外可访问的内容
   return {
     token,
     userInfo,
+    displayName,
     isLogin,
     isAdmin,
     login,
     logout,
-    getUserInfo,
   }
 })

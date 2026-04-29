@@ -1,511 +1,505 @@
-<template>
-  <div class="home-root">
-    <!-- 动态背景 Blob -->
-    <div class="bg-blobs">
-      <div class="blob blob-1"></div>
-      <div class="blob blob-2"></div>
-      <div class="blob blob-3"></div>
-    </div>
-
-    <!-- 噪音贴图层 -->
-    <svg class="noise-layer" viewBox="0 0 512 512">
-      <filter id="noise">
-        <feTurbulence
-          type="fractalNoise"
-          baseFrequency="0.65"
-          numOctaves="3"
-          stitchTiles="stitch"
-        />
-        <feColorMatrix type="saturate" values="0" />
-      </filter>
-      <rect width="100%" height="100%" filter="url(#noise)" opacity="0.035" />
-    </svg>
-
-    <!-- 主容器 -->
-    <div class="home-container">
-      <!-- Logo / Brand -->
-      <div class="brand">
-        <div class="brand-icon">
-          <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-            <defs>
-              <linearGradient id="iconGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#fff" stop-opacity="0.9" />
-                <stop offset="100%" stop-color="#fff" stop-opacity="0.4" />
-              </linearGradient>
-            </defs>
-            <circle cx="18" cy="18" r="17" stroke="url(#iconGrad)" stroke-width="1.5" fill="none" />
-            <circle cx="18" cy="18" r="8" fill="url(#iconGrad)" />
-            <circle cx="18" cy="18" r="3" fill="#fff" fill-opacity="0.6" />
-          </svg>
-        </div>
-        <span class="brand-name">Glassify</span>
-      </div>
-
-      <!-- 欢迎信息 -->
-      <div class="welcome-section">
-        <h1 class="welcome-title">Welcome to Glassify</h1>
-        <p class="welcome-subtitle">A modern blogging platform with AI-powered recommendations</p>
-        <button class="get-started-btn" @click="navigateToLogin">Get Started</button>
-      </div>
-
-      <!-- 功能卡片 -->
-      <div class="features-section">
-        <div class="feature-card">
-          <div class="feature-icon">
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
-              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
-            </svg>
-          </div>
-          <h3 class="feature-title">AI Recommendations</h3>
-          <p class="feature-description">
-            Get personalized content suggestions based on your interests
-          </p>
-        </div>
-
-        <div class="feature-card">
-          <div class="feature-icon">
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <circle cx="12" cy="12" r="10" />
-              <path d="M8 14s1.5 2 4 2 4-2 4-2" />
-              <line x1="9" y1="9" x2="9.01" y2="9" />
-              <line x1="15" y1="9" x2="15.01" y2="9" />
-            </svg>
-          </div>
-          <h3 class="feature-title">User Friendly</h3>
-          <p class="feature-description">
-            Intuitive interface with smooth animations and transitions
-          </p>
-        </div>
-
-        <div class="feature-card">
-          <div class="feature-icon">
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-              <polyline points="22 4 12 14.01 9 11.01" />
-            </svg>
-          </div>
-          <h3 class="feature-title">Fast Performance</h3>
-          <p class="feature-description">Optimized for speed and responsiveness</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useUserStore } from '@/stores/user'
+
+const CAPABILITIES_VIDEO_URL =
+  'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260418_094631_d30ab262-45ee-4b7d-99f3-5d5848c8ef13.mp4'
 
 const router = useRouter()
+const userStore = useUserStore()
 
-function navigateToLogin() {
+const heroVideo = ref<HTMLVideoElement | null>(null)
+const heroFrame = ref<number>()
+const heroFadingOut = ref(false)
+
+const isLoggedIn = computed(() => userStore.isLogin)
+const primaryCtaLabel = computed(() => (isLoggedIn.value ? '继续浏览文章' : '开始登录'))
+const entryLabel = computed(() => (isLoggedIn.value ? '已登录' : '登录'))
+
+const capabilityCards = [
+  {
+    title: '个性化推荐',
+    tags: ['兴趣建模', '阅读轨迹', '实时更新', '精准触达'],
+    description: '让每位读者打开首页时，都优先看到更可能产生共鸣的内容。',
+  },
+  {
+    title: '创作工作流',
+    tags: ['灵感生成', '结构建议', '高效发布', '风格统一'],
+    description: '从选题到落稿再到发布，用更轻量的步骤完成高质量内容表达。',
+  },
+  {
+    title: '博客洞察',
+    tags: ['互动分析', '趋势判断', '用户画像', '增长决策'],
+    description: '把访问与互动数据转成可执行判断，持续优化你的个人博客。',
+  },
+]
+
+const fadeTo = (video: HTMLVideoElement, target: number, duration: number) => {
+  if (heroFrame.value) {
+    cancelAnimationFrame(heroFrame.value)
+  }
+
+  const startOpacity = Number.parseFloat(video.style.opacity || '0')
+  const startTime = performance.now()
+
+  const tick = (now: number) => {
+    const progress = Math.min((now - startTime) / duration, 1)
+    video.style.opacity = String(startOpacity + (target - startOpacity) * progress)
+
+    if (progress < 1) {
+      heroFrame.value = requestAnimationFrame(tick)
+    }
+  }
+
+  heroFrame.value = requestAnimationFrame(tick)
+}
+
+const bindLoop = () => {
+  const video = heroVideo.value
+  if (!video) return () => {}
+
+  const onLoadedData = () => {
+    video.style.opacity = '0'
+    video.play().catch(() => undefined)
+    fadeTo(video, 1, 500)
+  }
+
+  const onTimeUpdate = () => {
+    const remaining = video.duration - video.currentTime
+    if (!heroFadingOut.value && remaining <= 0.55 && remaining > 0) {
+      heroFadingOut.value = true
+      fadeTo(video, 0, 500)
+    }
+  }
+
+  const onEnded = () => {
+    video.style.opacity = '0'
+    window.setTimeout(() => {
+      video.currentTime = 0
+      video.play().catch(() => undefined)
+      heroFadingOut.value = false
+      fadeTo(video, 1, 500)
+    }, 100)
+  }
+
+  video.addEventListener('loadeddata', onLoadedData)
+  video.addEventListener('timeupdate', onTimeUpdate)
+  video.addEventListener('ended', onEnded)
+
+  return () => {
+    video.removeEventListener('loadeddata', onLoadedData)
+    video.removeEventListener('timeupdate', onTimeUpdate)
+    video.removeEventListener('ended', onEnded)
+  }
+}
+
+let cleanupHero: (() => void) | undefined
+
+onMounted(() => {
+  cleanupHero = bindLoop()
+})
+
+onBeforeUnmount(() => {
+  cleanupHero?.()
+  if (heroFrame.value) cancelAnimationFrame(heroFrame.value)
+})
+
+const scrollToSection = (id: string) => {
+  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+const goToLogin = () => {
   router.push('/login')
+}
+
+const handlePrimaryAction = () => {
+  if (isLoggedIn.value) {
+    scrollToSection('capabilities')
+    return
+  }
+
+  goToLogin()
+}
+
+const handleEntryAction = () => {
+  if (isLoggedIn.value) {
+    scrollToSection('hero')
+    return
+  }
+
+  goToLogin()
+}
+
+const handleLogout = () => {
+  userStore.logout()
+  router.replace('/')
 }
 </script>
 
-<style lang="scss" scoped>
-// ═══════════════════════════════════════════════
-//  Variables
-// ═══════════════════════════════════════════════
+<template>
+  <div class="cinematic-page blog-home-page">
+    <header class="home-nav glass-chip reveal-up">
+      <RouterLink to="/" class="home-nav__logo heading-serif">w</RouterLink>
+      <nav class="home-nav__center">
+        <button type="button" @click="scrollToSection('hero')">首页</button>
+        <button type="button" @click="scrollToSection('capabilities')">能力</button>
+        <button type="button">博客</button>
+        <button type="button">关于</button>
+        <button type="button" class="home-nav__entry" @click="handleEntryAction">
+          {{ entryLabel }}
+        </button>
+      </nav>
+      <span class="home-nav__right">Wintina Blog</span>
+    </header>
 
-// 颜色
-$clr-bg: #0c0e1a;
-$clr-text: rgba(255, 255, 255, 0.92);
-$clr-text-dim: rgba(255, 255, 255, 0.45);
-$clr-accent: #a78bfa; // 紫色亮调
-$clr-accent-deep: #7c3aed; // 紫色深调
-$clr-accent-mid: #6d28d9;
-$clr-accent-blue: #4f46e5;
-$clr-accent-light: #c4b5fd; // hover 亮紫
+    <section id="hero" class="home-section home-hero">
+      <video
+        ref="heroVideo"
+        class="home-hero__video"
+        :src="CAPABILITIES_VIDEO_URL"
+        muted
+        playsinline
+        preload="auto"
+      ></video>
 
-// Blob 颜色 map
-$blob-map: (
-  1: (
-    color: #7c3aed,
-    size: 500px,
-    top: -150px,
-    left: -100px,
-    duration: 16s,
-    delay: 0s,
-    opacity: 0.55,
-  ),
-  2: (
-    color: #06b6d4,
-    size: 400px,
-    top: 50%,
-    right: -100px,
-    duration: 18s,
-    delay: -4s,
-    opacity: 0.45,
-  ),
-  3: (
-    color: #ec4899,
-    size: 350px,
-    bottom: -100px,
-    left: 20%,
-    duration: 20s,
-    delay: -8s,
-    opacity: 0.4,
-  ),
-);
+      <div class="home-hero__mask"></div>
 
-// 尺寸
-$radius-card: 20px;
+      <div class="home-hero__content reveal-up delay-2">
+        <span class="glass-chip home-hero__badge">Personal Blog</span>
+        <h1 class="heading-serif">Nothing is impossible to a willing heart.</h1>
+        <p>
+          在一个更安静、更沉浸的主页里，管理创作节奏、打磨内容表达，并让推荐系统把文章送达更契合的读者。
+        </p>
 
-// 断点
-$bp-mobile: 768px;
+        <div v-if="isLoggedIn" class="glass-panel home-hero__user">
+          <div>
+            <span>当前账号</span>
+            <strong>{{ userStore.displayName || 'Wintina 用户' }}</strong>
+          </div>
+          <button type="button" class="glass-button--ghost" @click="handleLogout">退出登录</button>
+        </div>
 
-// ═══════════════════════════════════════════════
-//  Mixins
-// ═══════════════════════════════════════════════
+        <div class="home-hero__actions">
+          <button type="button" class="glass-button" @click="handlePrimaryAction">
+            {{ primaryCtaLabel }} ↗
+          </button>
+          <button type="button" class="home-hero__link" @click="scrollToSection('capabilities')">
+            查看平台能力
+          </button>
+        </div>
+      </div>
+    </section>
 
-// 毛玻璃背景
-@mixin glass(
-  $blur: 32px,
-  $saturate: 1.4,
-  $bg-opacity-start: 0.1,
-  $bg-opacity-mid: 0.04,
-  $bg-opacity-end: 0.07
-) {
-  background: linear-gradient(
-    145deg,
-    rgba(255, 255, 255, $bg-opacity-start) 0%,
-    rgba(255, 255, 255, $bg-opacity-mid) 60%,
-    rgba(255, 255, 255, $bg-opacity-end) 100%
-  );
-  backdrop-filter: blur($blur) saturate($saturate);
-  -webkit-backdrop-filter: blur($blur) saturate($saturate);
+    <section id="capabilities" class="home-section home-capabilities">
+      <div class="home-capabilities__intro">
+        <p>// Capabilities</p>
+        <h2 class="heading-serif">为个人博客而生的智能能力</h2>
+      </div>
+
+      <div class="home-capabilities__grid">
+        <article
+          v-for="card in capabilityCards"
+          :key="card.title"
+          class="glass-panel capability-card"
+        >
+          <div class="capability-card__top">
+            <div class="capability-card__icon"><span></span></div>
+            <div class="capability-card__tags">
+              <span v-for="tag in card.tags" :key="tag" class="glass-chip">{{ tag }}</span>
+            </div>
+          </div>
+
+          <div class="capability-card__body">
+            <h3 class="heading-serif">{{ card.title }}</h3>
+            <p>{{ card.description }}</p>
+          </div>
+        </article>
+      </div>
+    </section>
+  </div>
+</template>
+
+<style scoped lang="scss">
+.blog-home-page {
+  background: #03060d;
 }
 
-// 玻璃边框 + 阴影
-@mixin glass-border($border-opacity: 0.15, $shadow-opacity: 0.25, $highlight-opacity: 0.18) {
-  border: 1px solid rgba(255, 255, 255, $border-opacity);
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, $shadow-opacity),
-    inset 0 1px 0 rgba(255, 255, 255, $highlight-opacity);
+//.home-nav {
+//  position: fixed;
+//  top: 16px;
+//  left: 20%;
+//  transform: translateX(-50%);
+//  z-index: 40;
+//  width: min(1180px, calc(100% - 24px));
+//  display: grid;
+//  grid-template-columns: 1fr auto 1fr;
+//  align-items: center;
+//  padding: 8px 12px;
+//}
+.home-nav {
+  position: fixed;
+  top: 16px;
+  /* 固定定位居中方案 */
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+
+  z-index: 40;
+  width: min(1180px, calc(100% - 24px));
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: 8px 12px;
 }
 
-// ═══════════════════════════════════════════════
-//  Root
-// ═══════════════════════════════════════════════
+.home-nav__logo {
+  justify-self: start;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 1.8rem;
+}
 
-.home-root {
+.home-nav__center {
+  justify-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.home-nav__center button {
+  border: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.9);
+  padding: 10px 12px;
+}
+
+.home-nav__entry {
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.home-nav__right {
+  justify-self: end;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.86rem;
+}
+
+.home-section {
   position: relative;
   min-height: 100vh;
-  background: $clr-bg;
+}
+
+.home-hero {
   overflow: hidden;
-  font-family: 'Inter', 'SF Pro Display', system-ui, sans-serif;
-  color: $clr-text;
-  -webkit-font-smoothing: antialiased;
 }
 
-// ═══════════════════════════════════════════════
-//  Background Blobs
-// ═══════════════════════════════════════════════
-
-.bg-blobs {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-}
-
-.blob {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(90px);
-  opacity: 0.55;
-  animation: blobFloat 14s ease-in-out infinite alternate;
-}
-
-// 用 map 循环生成 blob
-@each $index, $props in $blob-map {
-  .blob-#{$index} {
-    width: map-get($props, size);
-    height: map-get($props, size);
-    background: map-get($props, color);
-    opacity: map-get($props, opacity);
-    animation-duration: map-get($props, duration);
-    animation-delay: map-get($props, delay);
-
-    @if map-has-key($props, top) {
-      top: map-get($props, top);
-    }
-    @if map-has-key($props, bottom) {
-      bottom: map-get($props, bottom);
-    }
-    @if map-has-key($props, left) {
-      left: map-get($props, left);
-    }
-    @if map-has-key($props, right) {
-      right: map-get($props, right);
-    }
-  }
-}
-
-@keyframes blobFloat {
-  0% {
-    transform: translate(0, 0) scale(1);
-  }
-  33% {
-    transform: translate(40px, -30px) scale(1.08);
-  }
-  66% {
-    transform: translate(-30px, 25px) scale(0.95);
-  }
-  100% {
-    transform: translate(20px, -10px) scale(1.04);
-  }
-}
-
-// ═══════════════════════════════════════════════
-//  Noise Overlay
-// ═══════════════════════════════════════════════
-
-.noise-layer {
+.home-hero__video,
+.home-hero__mask {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  z-index: 1;
-  pointer-events: none;
-  mix-blend-mode: overlay;
 }
 
-// ═══════════════════════════════════════════════
-//  Main Container
-// ═══════════════════════════════════════════════
+.home-hero__video {
+  object-fit: cover;
+  object-position: center;
+  opacity: 0;
+}
 
-.home-container {
+.home-hero__mask {
+  background:
+    radial-gradient(circle at 18% 18%, rgba(145, 181, 255, 0.22), transparent 26%),
+    linear-gradient(180deg, rgba(3, 7, 16, 0.28) 0%, rgba(3, 8, 18, 0.72) 72%, #040812 100%);
+}
+
+.home-hero__content {
   position: relative;
-  z-index: 2;
-  padding: 40px;
-  max-width: 1200px;
+  z-index: 1;
+  max-width: 860px;
   margin: 0 auto;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  gap: 80px;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 120px 20px 40px;
 }
 
-// ═══════════════════════════════════════════════
-//  Brand
-// ═══════════════════════════════════════════════
+.home-hero__badge {
+  padding: 9px 14px;
+}
 
-.brand {
+.home-hero__content h1 {
+  margin: 24px 0 16px;
+  font-size: clamp(3rem, 7.2vw, 5.6rem);
+  line-height: 0.88;
+}
+
+.home-hero__content p {
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.72;
+  max-width: 700px;
+}
+
+.home-hero__user {
+  margin-top: 20px;
   display: flex;
   align-items: center;
-  gap: 10px;
-
-  &-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 48px;
-    height: 48px;
-    border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    background: rgba(255, 255, 255, 0.06);
-    backdrop-filter: blur(12px);
-  }
-
-  &-name {
-    font-size: 22px;
-    font-weight: 600;
-    letter-spacing: -0.5px;
-    background: linear-gradient(135deg, #fff 30%, rgba(255, 255, 255, 0.55));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
+  gap: 14px;
+  padding: 16px;
 }
 
-// ═══════════════════════════════════════════════
-//  Welcome Section
-// ═══════════════════════════════════════════════
-
-.welcome-section {
-  text-align: center;
-  margin-top: 60px;
-
-  &-title {
-    font-size: 48px;
-    font-weight: 700;
-    letter-spacing: -1px;
-    margin-bottom: 16px;
-    background: linear-gradient(135deg, #fff 30%, rgba(255, 255, 255, 0.7));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-
-  &-subtitle {
-    font-size: 18px;
-    color: $clr-text-dim;
-    margin-bottom: 32px;
-  }
+.home-hero__user span {
+  display: block;
+  color: var(--text-muted);
+  margin-bottom: 4px;
 }
 
-.get-started-btn {
-  position: relative;
-  width: 180px;
-  height: 52px;
-  border-radius: 14px;
-  border: none;
-  cursor: pointer;
-  font-size: 15px;
-  font-weight: 600;
-  color: #fff;
-  letter-spacing: 0.3px;
-  overflow: hidden;
-  background: linear-gradient(
-    135deg,
-    $clr-accent-deep 0%,
-    $clr-accent-mid 50%,
-    $clr-accent-blue 100%
-  );
-  box-shadow:
-    0 4px 18px rgba(124, 58, 237, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.15);
-  transition:
-    transform 0.18s,
-    box-shadow 0.18s;
-
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      90deg,
-      transparent 0%,
-      rgba(255, 255, 255, 0.12) 50%,
-      transparent 100%
-    );
-    background-size: 200% 100%;
-    animation: shimmer 2.4s linear infinite;
-  }
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow:
-      0 6px 24px rgba(124, 58, 237, 0.5),
-      inset 0 1px 0 rgba(255, 255, 255, 0.15);
-  }
-
-  &:active {
-    transform: translateY(0);
-  }
+.home-hero__actions {
+  display: flex;
+  gap: 14px;
+  margin-top: 24px;
 }
 
-@keyframes shimmer {
-  from {
-    background-position: -200% 0;
-  }
-  to {
-    background-position: 200% 0;
-  }
+.home-hero__actions .glass-button {
+  border: 0;
 }
 
-// ═══════════════════════════════════════════════
-//  Features Section
-// ═══════════════════════════════════════════════
+.home-hero__link {
+  border: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.92);
+}
 
-.features-section {
+.home-capabilities {
+  padding: 110px 24px 60px;
+  background:
+    radial-gradient(circle at top, rgba(113, 150, 255, 0.12), transparent 20%),
+    linear-gradient(180deg, #040812 0%, #050a14 100%);
+}
+
+.home-capabilities__intro {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+.home-capabilities__intro p {
+  margin: 0 0 16px;
+  color: var(--text-muted);
+}
+
+.home-capabilities__intro h2 {
+  margin: 0;
+  font-size: clamp(2.5rem, 6vw, 4.8rem);
+  line-height: 0.92;
+}
+
+.home-capabilities__grid {
+  max-width: 1120px;
+  margin: 44px auto 0;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 24px;
-  margin-top: 40px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
 }
 
-.feature-card {
-  padding: 32px;
-  border-radius: $radius-card;
-  @include glass;
-  @include glass-border;
-  transition: transform 0.3s ease;
-
-  &:hover {
-    transform: translateY(-5px);
-  }
-
-  .feature-icon {
-    width: 56px;
-    height: 56px;
-    border-radius: 16px;
-    background: rgba(167, 139, 250, 0.15);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 20px;
-    color: $clr-accent;
-  }
-
-  .feature-title {
-    font-size: 18px;
-    font-weight: 600;
-    margin-bottom: 12px;
-  }
-
-  .feature-description {
-    font-size: 14px;
-    color: $clr-text-dim;
-    line-height: 1.5;
-  }
+.capability-card {
+  min-height: 340px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
 }
 
-// ═══════════════════════════════════════════════
-//  Responsive
-// ═══════════════════════════════════════════════
+.capability-card__top {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
 
-@media (max-width: $bp-mobile) {
-  .home-container {
-    padding: 24px;
-    gap: 60px;
+.capability-card__icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.capability-card__icon span {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.capability-card__tags {
+  max-width: 74%;
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.capability-card__tags .glass-chip {
+  font-size: 11px;
+  padding: 6px 10px;
+}
+
+.capability-card__body {
+  margin-top: auto;
+}
+
+.capability-card__body h3 {
+  margin: 0;
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+  line-height: 0.95;
+}
+
+.capability-card__body p {
+  margin: 12px 0 0;
+  color: var(--text-secondary);
+  line-height: 1.65;
+}
+
+@media (max-width: 1024px) {
+  .home-nav {
+    grid-template-columns: auto 1fr;
+    gap: 12px;
   }
 
-  .welcome-section {
-    margin-top: 40px;
-
-    &-title {
-      font-size: 36px;
-    }
-
-    &-subtitle {
-      font-size: 16px;
-    }
+  .home-nav__center {
+    justify-self: end;
   }
 
-  .features-section {
+  .home-nav__right {
+    display: none;
+  }
+
+  .home-capabilities__grid {
     grid-template-columns: 1fr;
   }
+}
 
-  .feature-card {
-    padding: 24px;
+@media (max-width: 760px) {
+  .home-nav {
+    width: calc(100% - 12px);
+    top: 8px;
+  }
+
+  .home-nav__center {
+    display: none;
+  }
+
+  .home-hero__actions,
+  .home-hero__user {
+    flex-direction: column;
+    width: 100%;
   }
 }
 </style>

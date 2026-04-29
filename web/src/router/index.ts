@@ -4,13 +4,11 @@ import Home from '@/views/blog/Home.vue'
 import Login from '@/views/auth/Login.vue'
 
 const routes: RouteRecordRaw[] = [
-  // 首页
   {
     path: '/',
     name: 'Home',
     component: Home,
   },
-  // 登录页
   {
     path: '/login',
     name: 'Login',

@@ -1,13 +1,7 @@
 import request from './requests'
-import type { LoginDTO, LoginVO, RegisterDTO, User } from '@/types'
+import type { LoginDTO, LoginVO, RegisterDTO } from '@/types'
 
-/**
- * 认证相关接口
- */
 export const authApi = {
-  /**
-   * 登录
-   */
   login(data: LoginDTO) {
     return request<LoginVO>({
       url: '/auth/login',
@@ -16,9 +10,6 @@ export const authApi = {
     })
   },
 
-  /**
-   * 注册
-   */
   register(data: RegisterDTO) {
     return request({
       url: '/auth/register',
@@ -27,23 +18,11 @@ export const authApi = {
     })
   },
 
-  /**
-   * 登出
-   */
-  logout() {
+  changePassword(data: { oldPassword: string; newPassword: string }) {
     return request({
-      url: '/auth/logout',
-      method: 'POST',
-    })
-  },
-
-  /**
-   * 获取当前用户信息
-   */
-  getUserInfo() {
-    return request<User>({
-      url: '/auth/info',
-      method: 'GET',
+      url: '/auth/password',
+      method: 'PUT',
+      data,
     })
   },
 }

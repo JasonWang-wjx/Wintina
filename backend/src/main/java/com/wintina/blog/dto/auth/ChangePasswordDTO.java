@@ -9,6 +9,11 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
+
+/**
+ * 用户修改密码DTO
+ * 用于用户修改密码时传递的参数
+ */
 @Data
 public class ChangePasswordDTO {
     @NotBlank(message = "旧密码不能为空")

@@ -1,348 +1,438 @@
-<template>
-  <div class="login-root">
-    <div class="login-container">
-      <div class="glass-card">
-        <h1 class="card-title">Welcome back</h1>
-        <p class="card-subtitle">Sign in to continue your journey</p>
-
-        <form class="login-form" @submit.prevent="handleSubmit">
-          <div class="input-group">
-            <label class="input-label">Email</label>
-            <div class="input-wrapper">
-              <input
-                type="email"
-                v-model="form.email"
-                placeholder="you@example.com"
-                autocomplete="email"
-                @focus="focusedField = 'email'"
-                @blur="handleEmailBlur"
-              />
-            </div>
-            <span class="error-msg" v-if="errors.email">{{ errors.email }}</span>
-          </div>
-
-          <div class="input-group">
-            <label class="input-label">Password</label>
-            <div class="input-wrapper">
-              <input
-                :type="showPassword ? 'text' : 'password'"
-                v-model="form.password"
-                placeholder="••••••••"
-                autocomplete="current-password"
-                @focus="focusedField = 'password'"
-                @blur="handlePasswordBlur"
-              />
-              <button
-                type="button"
-                class="eye-btn"
-                @click="showPassword = !showPassword"
-                aria-label="Toggle visibility"
-              >
-                {{ showPassword ? 'Hide' : 'Show' }}
-              </button>
-            </div>
-            <span class="error-msg" v-if="errors.password">{{ errors.password }}</span>
-          </div>
-
-          <div class="form-options">
-            <label class="remember-label">
-              <input type="checkbox" v-model="form.remember" class="remember-cb" />
-              Remember me
-            </label>
-            <a href="#" class="forgot-link" @click.prevent>Forgot password?</a>
-          </div>
-
-          <button type="submit" class="submit-btn" :class="{ loading: isLoading }">
-            {{ isLoading ? 'Signing in…' : 'Sign In' }}
-          </button>
-        </form>
-
-        <p class="signup-hint">
-          Don't have an account? <a href="#" class="signup-link" @click.prevent>Sign up</a>
-        </p>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { computed, reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import type { FormInstance, FormRules } from 'element-plus'
+import { authApi } from '@/api/auth'
+import { useUserStore } from '@/stores/user'
+import type { LoginDTO, RegisterDTO } from '@/types'
 
-// ─── 状态 ────────────────────────────────────
-const form = reactive({
-  email: '',
-  password: '',
-  remember: false,
-})
+const CAPABILITIES_VIDEO_URL =
+  'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260418_094631_d30ab262-45ee-4b7d-99f3-5d5848c8ef13.mp4'
 
-const errors = reactive<Record<string, string>>({
-  email: '',
-  password: '',
-})
+type AuthMode = 'login' | 'register'
 
-const focusedField = ref<string>('')
-const showPassword = ref(false)
-const isLoading = ref(false)
+const router = useRouter()
+const userStore = useUserStore()
 
-// ─── 事件处理 ──────────────────────────────────
-function handleEmailBlur() {
-  focusedField.value = ''
-  validateEmail()
+if (userStore.isLogin) {
+  router.replace('/')
 }
 
-function handlePasswordBlur() {
-  focusedField.value = ''
-  validatePassword()
+const authMode = ref<AuthMode>('login')
+const loginLoading = ref(false)
+const registerLoading = ref(false)
+const loginFormRef = ref<FormInstance>()
+const registerFormRef = ref<FormInstance>()
+
+const loginForm = reactive<LoginDTO>({
+  username: '',
+  password: '',
+})
+
+const registerForm = reactive<RegisterDTO>({
+  username: '',
+  email: '',
+  password: '',
+  nickname: '',
+})
+
+const loginRules: FormRules<LoginDTO> = {
+  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
+  password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
 }
 
-// ─── 验证 ────────────────────────────────────
-function validateEmail() {
-  if (!form.email) {
-    errors.email = 'Email is required'
-  } else if (!/^[^@]+@[^@]+\.[^@]+$/.test(form.email)) {
-    errors.email = 'Please enter a valid email'
-  } else {
-    errors.email = ''
+const registerRules: FormRules<RegisterDTO> = {
+  username: [
+    { required: true, message: '请输入用户名', trigger: 'blur' },
+    { min: 3, max: 20, message: '用户名长度为 3-20 位', trigger: 'blur' },
+  ],
+  email: [{ type: 'email', message: '邮箱格式不正确', trigger: 'blur' }],
+  password: [
+    { required: true, message: '请输入密码', trigger: 'blur' },
+    { min: 6, message: '密码至少 6 位', trigger: 'blur' },
+  ],
+  nickname: [{ max: 20, message: '昵称不能超过 20 位', trigger: 'blur' }],
+}
+
+const authTitle = computed(() => (authMode.value === 'login' ? '欢迎回到你的博客空间' : '创建你的博客账号'))
+
+const authSubtitle = computed(() =>
+  authMode.value === 'login'
+    ? '登录后继续写作、管理内容与查看个性化阅读反馈。'
+    : '注册后即可开启智能推荐与沉浸式个人博客体验。',
+)
+
+const switchMode = (mode: AuthMode) => {
+  authMode.value = mode
+}
+
+const submitLogin = async () => {
+  if (!loginFormRef.value) return
+  const valid = await loginFormRef.value.validate().catch(() => false)
+  if (!valid) return
+
+  loginLoading.value = true
+  try {
+    await userStore.login(loginForm)
+    ElMessage.success('登录成功，欢迎回来')
+    await router.push('/')
+  } finally {
+    loginLoading.value = false
   }
 }
 
-function validatePassword() {
-  if (!form.password) {
-    errors.password = 'Password is required'
-  } else if (form.password.length < 6) {
-    errors.password = 'Password must be at least 6 characters'
-  } else {
-    errors.password = ''
+const submitRegister = async () => {
+  if (!registerFormRef.value) return
+  const valid = await registerFormRef.value.validate().catch(() => false)
+  if (!valid) return
+
+  registerLoading.value = true
+  try {
+    await authApi.register({
+      ...registerForm,
+      nickname: registerForm.nickname?.trim() || registerForm.username,
+    })
+    ElMessage.success('注册成功，请使用新账号登录')
+    authMode.value = 'login'
+    loginForm.username = registerForm.username
+    loginForm.password = ''
+    registerFormRef.value.resetFields()
+  } finally {
+    registerLoading.value = false
   }
-}
-
-// ─── 提交 ────────────────────────────────────
-async function handleSubmit() {
-  validateEmail()
-  validatePassword()
-  if (errors.email || errors.password) return
-
-  isLoading.value = true
-  // 模拟异步请求
-  await new Promise((resolve) => setTimeout(resolve, 2000))
-  isLoading.value = false
-  alert('Login successful! 🎉')
 }
 </script>
 
-<style lang="scss" scoped>
-.login-root {
-  position: fixed;
+<template>
+  <div class="cinematic-page blog-auth-page">
+    <video class="blog-auth-video" :src="CAPABILITIES_VIDEO_URL" autoplay muted playsinline loop preload="auto"></video>
+    <div class="blog-auth-mask"></div>
+
+    <header class="blog-auth-nav glass-chip reveal-up">
+      <RouterLink to="/" class="blog-auth-nav__brand">
+        <span class="heading-serif">w</span>
+        <span>Wintina Blog</span>
+      </RouterLink>
+      <span class="glass-chip">Personalized Writing Platform</span>
+    </header>
+
+    <main class="blog-auth-layout">
+      <section class="blog-auth-copy reveal-up delay-2">
+        <span class="glass-chip">Writing · Insight · Growth</span>
+        <h1 class="heading-serif">让登录成为个人博客创作的起点</h1>
+        <p>
+          你可以在这里持续写作、沉淀知识与观点，并通过 AI 推荐把内容更稳定地触达真正感兴趣的读者。
+        </p>
+
+        <div class="blog-auth-copy__notes">
+          <article class="glass-panel">
+            <strong class="heading-serif">Focus</strong>
+            <span>专注表达与持续输出</span>
+          </article>
+          <article class="glass-panel">
+            <strong class="heading-serif">Signal</strong>
+            <span>用数据反馈优化内容方向</span>
+          </article>
+        </div>
+      </section>
+
+      <section class="glass-panel blog-auth-panel reveal-up delay-3">
+        <div class="blog-auth-panel__header">
+          <div>
+            <p>账号中心</p>
+            <h2>{{ authTitle }}</h2>
+            <span>{{ authSubtitle }}</span>
+          </div>
+          <div class="glass-chip blog-auth-tabs">
+            <button type="button" :class="{ active: authMode === 'login' }" @click="switchMode('login')">登录</button>
+            <button type="button" :class="{ active: authMode === 'register' }" @click="switchMode('register')">
+              注册
+            </button>
+          </div>
+        </div>
+
+        <el-form
+          v-show="authMode === 'login'"
+          ref="loginFormRef"
+          :model="loginForm"
+          :rules="loginRules"
+          label-position="top"
+        >
+          <el-form-item label="用户名" prop="username">
+            <el-input v-model="loginForm.username" placeholder="请输入用户名" size="large" />
+          </el-form-item>
+          <el-form-item label="密码" prop="password">
+            <el-input
+              v-model="loginForm.password"
+              type="password"
+              show-password
+              placeholder="请输入密码"
+              size="large"
+            />
+          </el-form-item>
+          <button type="button" class="glass-button blog-auth-submit" :disabled="loginLoading" @click="submitLogin">
+            {{ loginLoading ? '正在登录...' : '立即登录' }}
+          </button>
+        </el-form>
+
+        <el-form
+          v-show="authMode === 'register'"
+          ref="registerFormRef"
+          :model="registerForm"
+          :rules="registerRules"
+          label-position="top"
+        >
+          <el-form-item label="用户名" prop="username">
+            <el-input v-model="registerForm.username" placeholder="3-20 位用户名" size="large" />
+          </el-form-item>
+          <div class="blog-auth-grid">
+            <el-form-item label="邮箱" prop="email">
+              <el-input v-model="registerForm.email" placeholder="请输入邮箱" size="large" />
+            </el-form-item>
+            <el-form-item label="昵称" prop="nickname">
+              <el-input v-model="registerForm.nickname" placeholder="可选，默认使用用户名" size="large" />
+            </el-form-item>
+          </div>
+          <el-form-item label="密码" prop="password">
+            <el-input
+              v-model="registerForm.password"
+              type="password"
+              show-password
+              placeholder="至少 6 位密码"
+              size="large"
+            />
+          </el-form-item>
+          <button
+            type="button"
+            class="glass-button blog-auth-submit"
+            :disabled="registerLoading"
+            @click="submitRegister"
+          >
+            {{ registerLoading ? '正在创建账号...' : '创建账号' }}
+          </button>
+        </el-form>
+
+        <div class="blog-auth-panel__switch">
+          <span>{{ authMode === 'login' ? '还没有账号？' : '已经有账号了？' }}</span>
+          <button type="button" @click="switchMode(authMode === 'login' ? 'register' : 'login')">
+            {{ authMode === 'login' ? '去注册' : '去登录' }}
+          </button>
+        </div>
+      </section>
+    </main>
+  </div>
+</template>
+
+<style scoped lang="scss">
+.blog-auth-page {
+  position: relative;
+  min-height: 100vh;
+  padding: 26px;
+}
+
+.blog-auth-video,
+.blog-auth-mask {
+  position: absolute;
   inset: 0;
-  min-height: 100vh;
-  background: #0c0e1a;
-  overflow: hidden;
-  font-family: 'Inter', 'SF Pro Display', system-ui, sans-serif;
-  color: rgba(255, 255, 255, 0.92);
-  -webkit-font-smoothing: antialiased;
-}
-
-.login-container {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  padding: 24px;
-}
-
-.glass-card {
-  position: relative;
   width: 100%;
-  max-width: 400px;
-  padding: 40px 36px 32px;
-  border-radius: 28px;
-  background: linear-gradient(
-    145deg,
-    rgba(255, 255, 255, 0.1) 0%,
-    rgba(255, 255, 255, 0.04) 60%,
-    rgba(255, 255, 255, 0.07) 100%
-  );
-  backdrop-filter: blur(32px) saturate(1.4);
-  -webkit-backdrop-filter: blur(32px) saturate(1.4);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.25),
-    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  height: 100%;
 }
 
-.card-title {
-  font-size: 26px;
-  font-weight: 700;
-  letter-spacing: -0.8px;
-  margin: 0 0 6px;
-  text-align: center;
+.blog-auth-video {
+  object-fit: cover;
 }
 
-.card-subtitle {
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.45);
-  text-align: center;
-  margin: 0 0 24px;
+.blog-auth-mask {
+  background:
+    radial-gradient(circle at 16% 22%, rgba(142, 178, 255, 0.2), transparent 26%),
+    linear-gradient(120deg, rgba(3, 8, 18, 0.78) 22%, rgba(4, 10, 20, 0.54) 56%, rgba(5, 10, 20, 0.82) 100%);
 }
 
-.login-form {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-.input-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.input-label {
-  font-size: 13px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.45);
-  letter-spacing: 0.2px;
-}
-
-.input-wrapper {
+.blog-auth-nav,
+.blog-auth-layout {
   position: relative;
+  z-index: 1;
+}
+
+.blog-auth-nav {
   display: flex;
-  align-items: center;
-  height: 48px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  overflow: hidden;
-}
-
-.input-wrapper input {
-  flex: 1;
-  height: 100%;
-  background: transparent;
-  border: none;
-  outline: none;
-  color: rgba(255, 255, 255, 0.92);
-  font-size: 14.5px;
-  font-weight: 450;
-  padding: 0 14px;
-  caret-color: #a78bfa;
-}
-
-.input-wrapper input::placeholder {
-  color: rgba(255, 255, 255, 0.28);
-}
-
-.eye-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 100%;
-  background: none;
-  border: none;
-  color: rgba(255, 255, 255, 0.45);
-  cursor: pointer;
-  font-size: 12px;
-}
-
-.eye-btn:hover {
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.error-msg {
-  font-size: 12px;
-  color: #f87171;
-  padding-left: 4px;
-}
-
-.form-options {
-  display: flex;
-  align-items: center;
   justify-content: space-between;
-  margin-top: -6px;
-}
-
-.remember-label {
-  display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.45);
-  cursor: pointer;
+  padding: 10px 14px;
 }
 
-.remember-label:hover {
-  color: rgba(255, 255, 255, 0.92);
-}
-
-.forgot-link {
-  font-size: 13px;
+.blog-auth-nav__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   font-weight: 600;
-  color: #a78bfa;
-  text-decoration: none;
 }
 
-.forgot-link:hover {
-  color: #c4b5fd;
-  text-shadow: 0 0 10px rgba(167, 139, 250, 0.4);
+.blog-auth-nav__brand .heading-serif {
+  font-size: 1.9rem;
+  line-height: 1;
 }
 
-.submit-btn {
-  position: relative;
+.blog-auth-layout {
+  min-height: calc(100vh - 84px);
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(360px, 520px);
+  gap: 30px;
+  align-items: center;
+}
+
+.blog-auth-copy h1 {
+  margin: 22px 0 18px;
+  font-size: clamp(3rem, 7vw, 5.6rem);
+  line-height: 0.9;
+}
+
+.blog-auth-copy p {
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.72;
+  max-width: 660px;
+}
+
+.blog-auth-copy__notes {
+  margin-top: 26px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  max-width: 540px;
+}
+
+.blog-auth-copy__notes article {
+  padding: 18px;
+  border-radius: var(--radius-card);
+}
+
+.blog-auth-copy__notes strong {
+  display: block;
+  font-size: 2rem;
+}
+
+.blog-auth-copy__notes span {
+  color: var(--text-secondary);
+}
+
+.blog-auth-panel {
+  padding: 26px;
+  border-radius: var(--radius-panel);
+}
+
+.blog-auth-panel__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.blog-auth-panel__header p {
+  margin: 0;
+  color: var(--text-muted);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+}
+
+.blog-auth-panel__header h2 {
+  margin: 8px 0;
+}
+
+.blog-auth-panel__header span {
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.blog-auth-tabs {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+}
+
+.blog-auth-tabs button {
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-secondary);
+  padding: 8px 14px;
+}
+
+.blog-auth-tabs button.active {
+  background: rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.96);
+}
+
+.blog-auth-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+:deep(.el-form-item__label) {
+  color: rgba(255, 255, 255, 0.86);
+}
+
+:deep(.el-input__wrapper) {
+  min-height: 50px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.14);
+}
+
+:deep(.el-input__inner) {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.blog-auth-submit {
   width: 100%;
-  height: 50px;
-  margin-top: 4px;
-  border-radius: 14px;
-  border: none;
-  cursor: pointer;
-  font-size: 15px;
-  font-weight: 600;
-  color: #fff;
-  letter-spacing: 0.3px;
-  overflow: hidden;
-  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 50%, #4f46e5 100%);
-  box-shadow:
-    0 4px 18px rgba(124, 58, 237, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.15);
-  transition:
-    transform 0.18s,
-    box-shadow 0.18s;
+  margin-top: 8px;
+  border: 0;
 }
 
-.submit-btn:hover {
-  transform: translateY(-1px);
-  box-shadow:
-    0 6px 24px rgba(124, 58, 237, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+.blog-auth-panel__switch {
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
 }
 
-.submit-btn:active {
-  transform: translateY(0);
+.blog-auth-panel__switch span {
+  color: var(--text-secondary);
 }
 
-.submit-btn.loading {
-  opacity: 0.8;
-  cursor: not-allowed;
+.blog-auth-panel__switch button {
+  border: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.94);
 }
 
-.signup-hint {
-  text-align: center;
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.45);
-  margin: 24px 0 0;
+@media (max-width: 1024px) {
+  .blog-auth-layout {
+    grid-template-columns: 1fr;
+    padding-top: 24px;
+  }
 }
 
-.signup-link {
-  font-weight: 600;
-  color: #a78bfa;
-  text-decoration: none;
-}
+@media (max-width: 760px) {
+  .blog-auth-page {
+    padding: 14px;
+  }
 
-.signup-link:hover {
-  color: #c4b5fd;
-  text-shadow: 0 0 10px rgba(167, 139, 250, 0.4);
+  .blog-auth-nav {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .blog-auth-copy__notes,
+  .blog-auth-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .blog-auth-panel__header {
+    flex-direction: column;
+  }
 }
 </style>
