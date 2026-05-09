@@ -5,6 +5,7 @@ import com.wintina.blog.dto.post.CreatePostDTO;
 import com.wintina.blog.dto.post.PostQueryDTO;
 import com.wintina.blog.dto.post.UpdatePostDTO;
 import com.wintina.blog.vo.post.PostDetailVO;
+import com.wintina.blog.vo.post.PostEditorOptionsVO;
 import com.wintina.blog.vo.post.PostListItemVO;
 
 public interface PostService {
@@ -17,4 +18,6 @@ public interface PostService {
     PostDetailVO getPostDetail(Long postId, Long currentUserId, boolean onlyPublished);
 
     IPage<PostListItemVO> pagePosts(PostQueryDTO queryDTO, boolean onlyPublished);
+
+    PostEditorOptionsVO getEditorOptions();
 }

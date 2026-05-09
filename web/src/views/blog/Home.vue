@@ -113,9 +113,13 @@ const goToLogin = () => {
   router.push('/login')
 }
 
+const goToPosts = () => {
+  router.push('/posts')
+}
+
 const handlePrimaryAction = () => {
   if (isLoggedIn.value) {
-    scrollToSection('capabilities')
+    goToPosts()
     return
   }
 
@@ -144,13 +148,13 @@ const handleLogout = () => {
       <nav class="home-nav__center">
         <button type="button" @click="scrollToSection('hero')">首页</button>
         <button type="button" @click="scrollToSection('capabilities')">能力</button>
-        <button type="button">博客</button>
+        <button type="button" @click="goToPosts">博客</button>
         <button type="button">关于</button>
         <button type="button" class="home-nav__entry" @click="handleEntryAction">
           {{ entryLabel }}
         </button>
       </nav>
-      <span class="home-nav__right">Wintina Blog</span>
+      <span class="home-nav__right">Wintina</span>
     </header>
 
     <section id="hero" class="home-section home-hero">
@@ -225,18 +229,6 @@ const handleLogout = () => {
   background: #03060d;
 }
 
-//.home-nav {
-//  position: fixed;
-//  top: 16px;
-//  left: 20%;
-//  transform: translateX(-50%);
-//  z-index: 40;
-//  width: min(1180px, calc(100% - 24px));
-//  display: grid;
-//  grid-template-columns: 1fr auto 1fr;
-//  align-items: center;
-//  padding: 8px 12px;
-//}
 .home-nav {
   position: fixed;
   top: 16px;

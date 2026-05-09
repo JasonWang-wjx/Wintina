@@ -16,8 +16,10 @@ public class PostListItemVO {
     private Integer viewCount;
     private Integer likeCount;
     private Integer commentCount;
+    private Integer readTimeMinutes;
     private Long userId;
     private String authorName;
+    private String authorAvatar;
     private Long categoryId;
     private String categoryName;
     private List<Long> tagIds;

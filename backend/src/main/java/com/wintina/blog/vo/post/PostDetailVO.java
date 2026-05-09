@@ -7,6 +7,22 @@ import java.util.List;
 
 @Data
 public class PostDetailVO {
+    @Data
+    public static class TocItem {
+        private String id;
+        private String text;
+        private Integer level;
+    }
+
+    @Data
+    public static class RelatedPostItem {
+        private Long id;
+        private String title;
+        private String coverImage;
+        private LocalDateTime publishTime;
+        private Integer viewCount;
+    }
+
     private Long id;
     private String title;
     private String slug;
@@ -27,6 +43,12 @@ public class PostDetailVO {
     private String seoDescription;
     private Long userId;
     private String authorName;
+    private String authorAvatar;
+    private String authorBio;
+    private Integer authorPostCount;
+    private Integer readTimeMinutes;
+    private List<TocItem> toc;
+    private List<RelatedPostItem> relatedPosts;
     private Long categoryId;
     private String categoryName;
     private List<Long> tagIds;
